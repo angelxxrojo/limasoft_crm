@@ -77,6 +77,6 @@ Para despliegue de aplicativo
   python manage.py runserver
 ```
 
-Visita http://localhost:8000/
+Visita http://localhost:8002/
 
 

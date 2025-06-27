@@ -32,4 +32,4 @@ USER appuser
 EXPOSE 8000
 
 # Comando por defecto
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "limasoftcrm_project.wsgi:application"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8002", "limasoftcrm_project.wsgi:application"]

@@ -41,7 +41,7 @@ limasoft_venv\Scripts\activate
 source limasoft_venv/bin/activate
 ```
 ```bash
-cd limasoftcrm_project
+cd limasoft_crm
 ```
 Instalar Requerimientos
 ```bash

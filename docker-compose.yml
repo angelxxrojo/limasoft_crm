@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile
-    command: python manage.py runserver 0.0.0.0:8002
+    command: poetry run python manage.py runserver 0.0.0.0:8002
     volumes:
       - .:/app
       - ./docker/entrypoint.sh:/app/entrypoint.sh
@@ -13,9 +13,13 @@ services:
     env_file:
       - .env
     depends_on:
-      - db
-      - minio
-    restart: always  # Reinicia automáticamente en caso de errores
+      db:
+        condition: service_healthy
+      minio:
+        condition: service_started
+    restart: always
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
 
   db:
     image: postgres:latest
@@ -29,18 +33,24 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_HOST_AUTH_METHOD: trust
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   minio:
     image: minio/minio
-    command: server /data
+    command: server /data --console-address ":9001"
     ports:
       - "9000:9000"
+      - "9001:9001"
     environment:
       MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
       MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
     volumes:
       - minio_data:/data
-    restart: always  # Reinicia automáticamente en caso de errores
+    restart: always
 
 volumes:
   postgres_data:

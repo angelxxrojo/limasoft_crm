@@ -1,0 +1,216 @@
+{% extends 'crm/base.html' %}
+
+{% block title %}Customer List - CRM LimaSoft{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="h2 mb-3">
+            <i class="fas fa-users me-2"></i>Customer Management
+        </h1>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card stats-card">
+            <div class="card-body text-center">
+                <i class="fas fa-users fa-2x mb-2"></i>
+                <h3>{{ total_customers }}</h3>
+                <p class="mb-0">Total Customers</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stats-card">
+            <div class="card-body text-center">
+                <i class="fas fa-building fa-2x mb-2"></i>
+                <h3>{{ total_companies }}</h3>
+                <p class="mb-0">Companies</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stats-card">
+            <div class="card-body text-center">
+                <i class="fas fa-comments fa-2x mb-2"></i>
+                <h3>{{ total_interactions|floatformat:0 }}</h3>
+                <p class="mb-0">Total Interactions</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters Section -->
+<div class="filter-section">
+    <form method="get" class="row g-3">
+        <div class="col-md-4">
+            <label for="search" class="form-label">
+                <i class="fas fa-search me-1"></i>Search by Name or Company
+            </label>
+            <input type="text" class="form-control" id="search" name="search" 
+                   value="{{ search_query }}" placeholder="Enter name or company...">
+        </div>
+        
+        <div class="col-md-3">
+            <label for="birthday_filter" class="form-label">
+                <i class="fas fa-birthday-cake me-1"></i>Birthday Filter
+            </label>
+            <select class="form-select" id="birthday_filter" name="birthday_filter">
+                {% for value, label in birthday_filter_choices %}
+                    <option value="{{ value }}" {% if birthday_filter == value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="col-md-3">
+            <label for="sort" class="form-label">
+                <i class="fas fa-sort me-1"></i>Sort By
+            </label>
+            <select class="form-select" id="sort" name="sort">
+                {% for value, label in sort_choices %}
+                    <option value="{{ value }}" {% if sort_by == value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="col-md-2 d-flex align-items-end">
+            <button type="submit" class="btn btn-primary w-100">
+                <i class="fas fa-filter me-1"></i>Apply Filters
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Results Summary -->
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h5 class="mb-0">
+                    Customer List 
+                    {% if page_obj.paginator.count != total_customers %}
+                        <small class="text-muted">({{ page_obj.paginator.count }} of {{ total_customers }} customers)</small>
+                    {% else %}
+                        <small class="text-muted">({{ total_customers }} customers)</small>
+                    {% endif %}
+                </h5>
+            </div>
+            <div>
+                {% if search_query or birthday_filter %}
+                    <a href="{% url 'crm:customer_list' %}" class="btn btn-outline-secondary btn-sm">
+                        <i class="fas fa-times me-1"></i>Clear Filters
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Customer Table -->
+<div class="card">
+    <div class="card-body p-0">
+        {% if page_obj %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th scope="col">
+                                <i class="fas fa-user me-1"></i>Full Name
+                            </th>
+                            <th scope="col">
+                                <i class="fas fa-building me-1"></i>Company
+                            </th>
+                            <th scope="col">
+                                <i class="fas fa-birthday-cake me-1"></i>Birthday
+                            </th>
+                            <th scope="col">
+                                <i class="fas fa-comments me-1"></i>Last Interaction
+                            </th>
+                            <th scope="col">
+                                <i class="fas fa-user-tie me-1"></i>Sales Rep
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for customer in page_obj %}
+                            <tr>
+                                <td>
+                                    <strong>{{ customer.full_name }}</strong>
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary">{{ customer.company.name }}</span>
+                                </td>
+                                <td>
+                                    <span class="birthday">{{ customer.birthday_formatted }}</span>
+                                </td>
+                                <td>
+                                    <span class="last-interaction">{{ customer.last_interaction_display }}</span>
+                                </td>
+                                <td>
+                                    {{ customer.sales_rep.first_name }} {{ customer.sales_rep.last_name }}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                <h4 class="text-muted">No customers found</h4>
+                <p class="text-muted">Try adjusting your search criteria.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Pagination -->
+{% if page_obj.has_other_pages %}
+    <nav aria-label="Customer pagination" class="mt-4">
+        <ul class="pagination">
+            {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if birthday_filter %}birthday_filter={{ birthday_filter }}&{% endif %}{% if sort_by %}sort={{ sort_by }}&{% endif %}page=1">First</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if birthday_filter %}birthday_filter={{ birthday_filter }}&{% endif %}{% if sort_by %}sort={{ sort_by }}&{% endif %}page={{ page_obj.previous_page_number }}">Previous</a>
+                </li>
+            {% endif %}
+            
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if birthday_filter %}birthday_filter={{ birthday_filter }}&{% endif %}{% if sort_by %}sort={{ sort_by }}&{% endif %}page={{ num }}">{{ num }}</a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+            
+            {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if birthday_filter %}birthday_filter={{ birthday_filter }}&{% endif %}{% if sort_by %}sort={{ sort_by }}&{% endif %}page={{ page_obj.next_page_number }}">Next</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if birthday_filter %}birthday_filter={{ birthday_filter }}&{% endif %}{% if sort_by %}sort={{ sort_by }}&{% endif %}page={{ page_obj.paginator.num_pages }}">Last</a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+    
+    <div class="text-center">
+        <small class="text-muted">
+            Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} customers
+        </small>
+    </div>
+{% endif %}
+
+{% endblock %}

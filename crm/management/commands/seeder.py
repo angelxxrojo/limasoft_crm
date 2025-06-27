@@ -38,6 +38,16 @@ class Command(BaseCommand):
             default="admin123",
             help="Contraseña para el superusuario (default: admin123)"
         )
+        parser.add_argument(
+            "--quick",
+            action="store_true",
+            help="Usar datos de prueba rápidos en lugar del dataset completo"
+        )
+        parser.add_argument(
+            "--no-data",
+            action="store_true",
+            help="No poblar con datos ficticios"
+        )
 
     def handle(self, *args, **options):
         start_time = time.time()
@@ -79,14 +89,29 @@ class Command(BaseCommand):
                 "critical": True,
                 "custom": True,
             },
-            {
-                "name": "populate_data",
-                "description": "Poblando base de datos con datos ficticios (esto puede tardar varios minutos...)",
-                "args": [],
-                "kwargs": {"verbosity": 1},
-                "critical": True,
-            },
         ]
+
+        # Agregar comando de población de datos solo si no se especifica --no-data
+        if not options.get("no_data"):
+            if options.get("quick"):
+                commands_sequence.append({
+                    "name": "quick_populate",
+                    "description": "Poblando base de datos con datos de prueba rápidos",
+                    "args": [],
+                    "kwargs": {"verbosity": 1},
+                    "critical": False,
+                })
+            else:
+                commands_sequence.append({
+                    "name": "populate_data",
+                    "description": "Poblando base de datos con datos ficticios completos (esto puede tardar varios minutos...)",
+                    "args": [],
+                    "kwargs": {
+                        "verbosity": 1,
+                        "batch_size": 50,  # Lotes más pequeños para mejor concurrencia
+                    },
+                    "critical": False,
+                })
 
         # Contador de éxitos y fallos
         success_count = 0
@@ -166,6 +191,17 @@ class Command(BaseCommand):
                     f"\n📊 Panel Admin: http://localhost:8002/admin/"
                 )
             )
+            
+            if not options.get("no_data"):
+                self.stdout.write(
+                    self.style.HTTP_INFO(
+                        f"\n💡 CONSEJO: La aplicación está lista para usar!"
+                        f"\n   - Para datos de prueba rápidos: --quick"
+                        f"\n   - Para omitir datos: --no-data"
+                        f"\n   - La población de datos se ejecuta en lotes pequeños"
+                        f"\n     para permitir acceso concurrente a la aplicación."
+                    )
+                )
         else:
             self.stdout.write(
                 self.style.WARNING(

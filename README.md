@@ -32,6 +32,15 @@ Clonar el proyecto
 ```bash
 git remote add origin https://github.com/angelxxrojo/limasoft_crm.git
 ```
+## Con docker
+
+```bash
+docker-compose build
+docker-compose up
+```
+
+## De la Forma Tradicional
+
 Crear y Activar un Entorno Virtual
 ```bash
 python -m venv limasoft_venv

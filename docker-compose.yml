@@ -1,0 +1,47 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    command: python manage.py runserver 0.0.0.0:8002
+    volumes:
+      - .:/app
+      - ./docker/entrypoint.sh:/app/entrypoint.sh
+    ports:
+      - "8002:8002"
+    entrypoint: ["sh", "/app/entrypoint.sh"]
+    env_file:
+      - .env
+    depends_on:
+      - db
+      - minio
+    restart: always  # Reinicia automáticamente en caso de errores
+
+  db:
+    image: postgres:latest
+    restart: always
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "6543:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_HOST_AUTH_METHOD: trust
+
+  minio:
+    image: minio/minio
+    command: server /data
+    ports:
+      - "9000:9000"
+    environment:
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+    volumes:
+      - minio_data:/data
+    restart: always  # Reinicia automáticamente en caso de errores
+
+volumes:
+  postgres_data:
+  minio_data:

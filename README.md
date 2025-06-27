@@ -38,6 +38,8 @@ git remote add origin https://github.com/angelxxrojo/limasoft_crm.git
 docker-compose build
 docker-compose up
 ```
+Para este comandos, solo es esperar a que se pueda poblar los datos para poder ingresar a 
+http://localhost:8002/
 
 ## De la Forma Tradicional
 
